@@ -125,3 +125,11 @@ ax.grid(True)
 plt.show()
 ```
 ![Actual against Prophet](images/Actual_against_Prophet_model.png)
+
+### Fine tuning the model
+Before tuning the model, it is important to understand the significance of the various parameters that Prophet allows for tuning. In my model, I specified the number of changepoints, their scales, mode of seasonality and fourier order.
+
+- *Changepoints* are points in the data where there are sudden changes in trend. It represents a point in time where a significant change occured in the time series.
+- *changepoint_prior_scale* is also there to indicate how flexible the changepoints are allowed to be. This is basciallly how much each changepoint is allowed to fit the data. 
+- #seasonality_mode* refers to how seasonality components should be integrated with the predictions. There are 2 possible options here, with the default value set to an additive model and multiplicative as the other. In this case, I used an additive model, since we do not expect the behaviour and growth of ETF prices to be significantly different from previous years, so seasonality should be 'constant' over the entire period.
+- 
