@@ -4,7 +4,20 @@
 ## Forecasting ETF prices
 The aim of this project was to utilize Facebook's open source Prophet forecasting model to predict future prices of [State Street's S&P 500 ETF](https://finance.yahoo.com/quote/SPY/). With publicly available data on Yahoo Finance, it was relatively easy to get five year's worth of ETF prices.
 
-The next step was to implement [Facebook's Prophet forecasting model](https://facebook.github.io/prophet/), which is effective and relatively simple to use. It is a robust model that works best well with historical data. Moreover, it's tuning parameters allow for adjustment and increases in accuracy, subjected to various configurations.
+The next step was to implement [Facebook's Prophet forecasting model](https://facebook.github.io/prophet/), which is effective and relatively simple to use. It is a robust model that works best well with historical data. Moreover, it's tuning parameters allow for adjustment and increases in accuracy, subjected to various configurations. The Facebook team highlights 2 of Prophet's main advantages:
+
+### 1. Easy to produce straightforward, resonable and accurate forecasts
+### 2. Prophet forecasts are customizable in ways that are intuitive to non-experts.
+
+More can be found at this [link here](https://research.fb.com/blog/2017/02/prophet-forecasting-at-scale/)
+
+## Introduction to Prophet
+In summary, Prophet is an additive regression model that shines through its ease of use for analyst-in-the-loop forecasts and has worked well for many business forecasts tasks that were encountered at Facebook. It has four main components, namely:
+
+- Uses a piecewise linear or logisitc growth curve trend, where Prophet automatically detects changes in trends by selecing changepoints from the data.
+- Incorporates a yearly seasonal component modeled using Fourier series.
+- Weekly seasonal component using dummy variables.
+- User provided list of important holidays.
 
 ### Getting the data
 Yahoon Finance provides historical data for free, which you can obtain [here](https://finance.yahoo.com/quote/SPY/history?p=SPY).
@@ -70,3 +83,53 @@ future = future[future['day'] <5]
 
 forecast = m.predict(future)
 ```
+```python
+# double check if we have values for future predictions
+forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
+```
+[Future forecast dataframe](images/Prophet_future_predictions.png)
+
+With everything in place, lets plot the forecast of the Prophet model. In the plot below, significant changepoints have been factored into the graph to provide an understanding of where the series changes, as shown below.
+```python
+# plot the forecast
+from fbprophet.plot import add_changepoints_to_plot
+fig = m.plot(forecast);
+
+# add changepoints
+a = add_changepoints_to_plot(fig.gca(), m, forecast)
+```
+
+![Prophet model with changepoints](images/Prophet_model_with_changepoints.png)
+
+```python
+# plot components
+m.plot_components(forecast);
+```
+We can take a look at the components of the forecast as well.
+![Components](images/Prophet_model_components.png)
+
+Next, I plotted the actual performance of the index against our Prophet model, just to visualize how accurate the automated Prophet model was when compared to actual historical data.
+
+```python
+# Plotting the acutal plot against the forecast
+plt.rcParams["figure.figsize"] = [16,10]
+fig, ax = plt.subplots()
+ax.plot('date','adj_close', linestyle='--', color='g', data = df)
+ax.plot('ds', 'yhat', linestyle='-', color='b', data = forecast)
+
+ax.set_title('Actual against Prophet Model')
+ax.legend(['Actual','Forecast'])
+ax.xaxis.set_label_text('Year')
+ax.yaxis.set_label_text('Adj. Close/ USD')
+ax.grid(True)
+plt.show()
+```
+![Actual against Prophet](images/Actual_against_Prophet_model.png)
+
+### Fine tuning the model
+Before tuning the model, it is important to understand the significance of the various parameters that Prophet allows for tuning. In my model, I specified the number of changepoints, their scales, mode of seasonality and fourier order.
+
+- *Changepoints* are points in the data where there are sudden changes in trend. It represents a point in time where a significant change occured in the time series.
+- *changepoint_prior_scale* is also there to indicate how flexible the changepoints are allowed to be. This is basciallly how much each changepoint is allowed to fit the data. 
+- #seasonality_mode* refers to how seasonality components should be integrated with the predictions. There are 2 possible options here, with the default value set to an additive model and multiplicative as the other. In this case, I used an additive model, since we do not expect the behaviour and growth of ETF prices to be significantly different from previous years, so seasonality should be 'constant' over the entire period.
+- 
