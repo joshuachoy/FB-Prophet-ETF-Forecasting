@@ -131,5 +131,5 @@ Before tuning the model, it is important to understand the significance of the v
 
 - *Changepoints* are points in the data where there are sudden changes in trend. It represents a point in time where a significant change occured in the time series.
 - *changepoint_prior_scale* is also there to indicate how flexible the changepoints are allowed to be. This is basciallly how much each changepoint is allowed to fit the data. 
-- #seasonality_mode* refers to how seasonality components should be integrated with the predictions. There are 2 possible options here, with the default value set to an additive model and multiplicative as the other. In this case, I used an additive model, since we do not expect the behaviour and growth of ETF prices to be significantly different from previous years, so seasonality should be 'constant' over the entire period.
-- 
+- *seasonality_mode* refers to how seasonality components should be integrated with the predictions. There are 2 possible options here, with the default value set to an additive model and multiplicative as the other. In this case, I used an additive model, since we do not expect the behaviour and growth of ETF prices to be significantly different from previous years, so seasonality should be 'constant' over the entire period.
+- The Prophet model also allows you to change the *fourier_order*, which represents how sensitive the model will be in fitting quickly-changing and complex seasonality patterns.  
