@@ -150,3 +150,4 @@ for p in grid:
 
 print('Total Possible Models',count)
 ```
+![ParameterGrid model](images/ParamGrid.png)
