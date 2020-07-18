@@ -20,7 +20,7 @@ In summary, Prophet is an additive regression model that shines through its ease
 - User provided list of important holidays.
 
 ### Getting the data
-Yahoon Finance provides historical data for free, which you can obtain [here](https://finance.yahoo.com/quote/SPY/history?p=SPY).
+Yahoo Finance provides historical data for free, which you can obtain [here](https://finance.yahoo.com/quote/SPY/history?p=SPY).
 
 ```python
 # reading the dataset
@@ -133,3 +133,20 @@ Before tuning the model, it is important to understand the significance of the v
 - *changepoint_prior_scale* is also there to indicate how flexible the changepoints are allowed to be. This is basciallly how much each changepoint is allowed to fit the data. 
 - *seasonality_mode* refers to how seasonality components should be integrated with the predictions. There are 2 possible options here, with the default value set to an additive model and multiplicative as the other. In this case, I used an additive model, since we do not expect the behaviour and growth of ETF prices to be significantly different from previous years, so seasonality should be 'constant' over the entire period.
 - The Prophet model also allows you to change the *fourier_order*, which represents how sensitive the model will be in fitting quickly-changing and complex seasonality patterns.  
+
+For this model, I used the ParameterGrid function from the Scikit Learn package to create multiple parameter configurations.
+```
+# Count the total possible models that can arrive from the various model tuning parameters
+# Parameters such as mode of seasonality, fourier order, the number of changepoints and their scale
+
+from sklearn.model_selection import ParameterGrid
+params_grid = {'fourier_order':[10,12,15,17,20],
+               'changepoint_prior_scale':[0.05, 0.1, 0.5, 1, 1.5, 2],
+              'n_changepoints' : [100,150,200]}
+grid = ParameterGrid(params_grid)
+count = 0
+for p in grid:
+    count = count+1
+
+print('Total Possible Models',count)
+```
