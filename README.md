@@ -135,7 +135,7 @@ Before tuning the model, it is important to understand the significance of the v
 - The Prophet model also allows you to change the *fourier_order*, which represents how sensitive the model will be in fitting quickly-changing and complex seasonality patterns.  
 
 For this model, I used the ParameterGrid function from the Scikit Learn package to create multiple parameter configurations.
-```
+```python
 # Count the total possible models that can arrive from the various model tuning parameters
 # Parameters such as mode of seasonality, fourier order, the number of changepoints and their scale
 
@@ -150,3 +150,125 @@ for p in grid:
 
 print('Total Possible Models',count)
 ```
+![ParameterGrid model](images/ParamGrid.png)
+
+To evaluate the various parameters and their error metrics, I collected the error metrics into a separate model_parameters dataframe, before running all configurations.
+
+```python
+# Prophet model tuning
+model_parameters = pd.DataFrame(columns = ['MAPE', 'MAE', 'RMSE', 'Parameters'])
+
+start = time.time()
+counter = 0
+
+for p in tqdm(grid):
+    random.seed(10)
+    m = Prophet(seasonality_mode = 'additive',
+                          changepoint_prior_scale = p['changepoint_prior_scale'],
+                          n_changepoints = p['n_changepoints'],
+                          daily_seasonality = True,
+                          weekly_seasonality = True,
+                          yearly_seasonality = True, 
+                          interval_width = 0.95)
+    
+    #iterate through fourier_order
+    m.add_seasonality(name='monthly', period=H, fourier_order= int(p['fourier_order']))
+                
+    # fit our Prophet-ready dataframe
+    m.fit(df_prophet)
+    future = m.make_future_dataframe(periods = H)
+    
+    # remove weekends from our dataframe
+    future['day'] = future['ds'].dt.weekday
+    future = future[future['day'] <5]
+    forecast = m.predict(future)
+    
+    # compute error metrics
+    MAPE = get_mape(df['adj_close'], forecast['yhat'][:-20])
+    MAE = get_mae(df['adj_close'], forecast['yhat'][:-20])
+    RMSE = get_rmse(df['adj_close'], forecast['yhat'][:-20])
+    
+    # increase counter
+    counter +=1    
+    model_parameters = model_parameters.append({'MAPE':MAPE, 'MAE':MAE, 'RMSE':RMSE, 'Parameters':p}, 
+                                               ignore_index=True)
+    
+end = time.time()
+print("Time taken:" + end-start)
+```
+
+We then export the error metrics dataframe to find the optimal configuration which gives us the lowest error metrics. 
+
+```python
+# Export results to CSV
+model_parameters.to_csv('tuning_results.csv')
+
+# Sort parameters by descending MAPE
+model_parameters.sort_values(by = ['MAPE', 'MAE', 'RMSE'])
+
+# Model 79 provides the best results
+#grid[79]
+```
+
+The next step is to run the final model with our chosen parameters, before fitting it to a prophet model and view the results. In this case, configuration 79 gave us the lowest error metrics.
+![Tuning results](images/tuning_results.png)
+
+With this configuration, we can fit our final Prophet model with the chosen parameters to be used for our forecast.
+
+```python
+# Train final model with parameters
+final_model = Prophet(seasonality_mode='additive', n_changepoints= 150, changepoint_prior_scale = 2)
+final_model.add_seasonality(name='monthly', period=H, fourier_order= 12)
+
+# Fit final model
+final_model.fit(df_prophet)
+future = final_model.make_future_dataframe(periods = H)
+
+# remove weekends
+future['day'] = future['ds'].dt.weekday
+future = future[future['day'] <5]
+forecast_final = final_model.predict(future)
+forecast_final.head()
+```
+
+Last but not least, we can plot our final graphs to compare them against the actual and forecasted data from our final Prophet model.
+
+```python
+# plot graphs
+fig2 = final_model.plot(forecast_final);
+
+# with changepoints
+a = add_changepoints_to_plot(fig2.gca(), m, forecast_final)
+```
+![Final model](images/final_model.png)
+
+```python
+# plot components
+final_model.plot_components(forecast_final);
+```
+![Final model components](images/final_components.png)
+
+```python
+# plotting final model against actual data
+plt.rcParams["figure.figsize"] = [16,10]
+fig, ax = plt.subplots()
+ax.plot('date','adj_close', linestyle='--', color='g', data = df)
+ax.plot('ds', 'yhat', linestyle = '-', color='b', data = forecast_final)
+
+ax.set_title('Actual against Forecast')
+ax.legend(['Actual','Forecast'])
+ax.xaxis.set_label_text('Year')
+ax.yaxis.set_label_text('Adj. Close/ USD')
+ax.grid(True)
+plt.show()
+```
+![Final actual against forecast](images/final.png)
+
+Lastly, we can view the forecast for the ETF prices with the forecast horizon. 
+
+```python
+start_dt = '2020-06-15'
+forecasts= forecast_final[(forecast_final.ds >= start_dt)]
+forecasts.yhat
+```
+![Final actual against forecast](images/forecast_results.png)
