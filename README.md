@@ -211,6 +211,7 @@ model_parameters.sort_values(by = ['MAPE', 'MAE', 'RMSE'])
 ```
 
 The next step is to run the final model with our chosen parameters, before fitting it to a prophet model and view the results. In this case, configuration 79 gave us the lowest error metrics.
+
 ![Tuning results](images/tuning_results.png)
 
 With this configuration, we can fit our final Prophet model with the chosen parameters to be used for our forecast.
@@ -264,7 +265,7 @@ plt.show()
 ```
 ![Final actual against forecast](images/final.png)
 
-Lastly, we can view the forecast for the ETF prices with the forecast horizon. 
+Finally, we can view the forecast for the ETF prices with the forecast horizon. 
 
 ```python
 start_dt = '2020-06-15'
